@@ -20,6 +20,8 @@ resource "aws_subnet" "subnet-1" {
     vpc_id = aws_vpc.main_vpc.id
     cidr_block = "10.0.1.0/24"
     availability_zone = "ap-south-1a"
+    map_public_ip_on_launch = true
+    
     
     tags = {
       Name = "Web server subnet"
@@ -30,6 +32,7 @@ resource "aws_subnet" "subnet-2" {
   vpc_id = aws_vpc.main_vpc.id
   cidr_block = "10.0.2.0/24"
   availability_zone = "ap-south-1b"
+  map_public_ip_on_launch = true
 
   tags = {
     Name = "SQL"
@@ -46,7 +49,7 @@ resource "aws_internet_gateway" "igw" {
 
 resource "aws_route_table" "main-route-table" {
   vpc_id = aws_vpc.main_vpc.id
-  route = {
+  route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw.id
   }
@@ -100,6 +103,7 @@ resource "aws_security_group" "DB-group" {
         to_port = 3306
         protocol = "tcp"
         cidr_blocks = ["10.0.1.0/24"]
+        security_groups = [aws_security_group.web-server-group.id]
     }
 
     egress{
@@ -114,7 +118,7 @@ resource "aws_instance" "web-server" {
   ami = "ami-0f58b397bc5c1f2e8"
   instance_type = "t2.micro"
   subnet_id = aws_subnet.subnet-1.id
-  security_groups = [aws_security_group.web-server-group]
+  security_groups = [aws_security_group.web-server-group.id]
   key_name = "EC2First"
   user_data = <<-EOF
                 #!/bin/bash
@@ -130,7 +134,7 @@ resource "aws_instance" "web-server" {
 
 resource "aws_db_subnet_group" "db-subnet-group" {
   name = "db-subnet-group"
-  subnet_ids = [aws_subnet.subnet-2.id]
+  subnet_ids = [aws_subnet.subnet-2.id, aws_subnet.subnet-1.id]
 }
 
 resource "aws_db_instance" "DB" {
