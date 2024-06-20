@@ -182,8 +182,8 @@ resource "aws_db_instance" "DB" {
   engine               = "mysql"
   engine_version       = "8.0"
   instance_class       = "db.t3.micro"
-  username             = "grahith"
-  password             = "123456789"
+  username             = "username"
+  password             = "password"
   parameter_group_name = "default.mysql8.0"
   skip_final_snapshot  = true
   vpc_security_group_ids = [aws_security_group.rds-group.id]
@@ -201,11 +201,36 @@ resource "aws_instance" "node-red" {
   security_groups = [aws_security_group.node-red-group.id]
   key_name = "EC2First"
   user_data = <<-EOF
-                #!/bin/bash
-                sudo apt update -y
-                sudo apt install apache2 -y
-                sudo systemctl start apache2
-                EOF
+              #!/bin/bash
+              # Update the package repository
+              sudo apt-get update
+
+              # Install Node.js and npm
+              sudo apt-get install -y nodejs npm
+
+              # Install Node-RED globally
+              sudo npm install -g --unsafe-perm node-red
+
+              # Create a systemd service file for Node-RED
+              echo "[Unit]
+              Description=Node-RED
+              After=network.target
+
+              [Service]
+              ExecStart=/usr/bin/node-red
+              Restart=on-failure
+              User=ubuntu
+              Group=ubuntu
+              Environment="NODE_RED_OPTIONS=-v"
+
+              [Install]
+              WantedBy=multi-user.target" | sudo tee /etc/systemd/system/node-red.service
+
+              # Reload systemd and enable the Node-RED service
+              sudo systemctl daemon-reload
+              sudo systemctl enable node-red
+              sudo systemctl start node-red
+              EOF
 
   tags = {
     Name = "Node Red server"
@@ -219,11 +244,44 @@ resource "aws_instance" "fast-api" {
   security_groups = [aws_security_group.fast-api-group.id]
   key_name = "EC2First"
   user_data = <<-EOF
-                #!/bin/bash
-                sudo apt update -y
-                sudo apt install apache2 -y
-                sudo systemctl start apache2
-                EOF
+              #!/bin/bash
+              # Update the package repository
+              sudo apt-get update
+
+              # Install Python3 and pip
+              sudo apt-get install -y python3 python3-pip
+
+              # Install FastAPI and Uvicorn
+              sudo pip3 install fastapi uvicorn
+
+              # Create a sample FastAPI app
+              echo "from fastapi import FastAPI
+
+              app = FastAPI()
+
+              @app.get('/')
+              def read_root():
+                  return {'Hello': 'World'}" > /home/ubuntu/main.py
+
+              # Create a systemd service file for FastAPI
+              echo "[Unit]
+              Description=FastAPI
+              After=network.target
+
+              [Service]
+              ExecStart=/usr/local/bin/uvicorn main:app --host 0.0.0.0 --port 8000
+              WorkingDirectory=/home/ubuntu
+              Restart=always
+              User=ubuntu
+
+              [Install]
+              WantedBy=multi-user.target" | sudo tee /etc/systemd/system/fastapi.service
+
+              # Reload systemd and enable the FastAPI service
+              sudo systemctl daemon-reload
+              sudo systemctl enable fastapi
+              sudo systemctl start fastapi
+              EOF
 
   tags = {
     Name = "Fast-API server"
@@ -237,11 +295,17 @@ resource "aws_instance" "nginx" {
   security_groups = [aws_security_group.sub3-group.id]
   key_name = "EC2First"
   user_data = <<-EOF
-                #!/bin/bash
-                sudo apt update -y
-                sudo apt install apache2 -y
-                sudo systemctl start apache2
-                EOF
+              #!/bin/bash
+              # Update the package repository
+              sudo apt-get update
+
+              # Install Nginx
+              sudo apt-get install -y nginx
+
+              # Start and enable Nginx
+              sudo systemctl start nginx
+              sudo systemctl enable nginx
+              EOF
 
   tags = {
     Name = "nginx"
@@ -254,7 +318,7 @@ resource "aws_eip" "lb" {
 }
 
 resource "aws_eip" "2b" {
-  instance = aws_instance.fast-api.ip
+  instance = aws_instance.fast-api.id
   domain   = "vpc"
 }
 
