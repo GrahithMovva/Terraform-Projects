@@ -66,12 +66,12 @@ resource "aws_route_table_association" "a" {
   route_table_id = aws_route_table.main-rt-table.id
 }
 
-resource "aws_route_table_association" "a" {
+resource "aws_route_table_association" "b" {
   subnet_id = aws_subnet.subnet-2.id
   route_table_id = aws_route_table.main-rt-table.id
 }
 
-resource "aws_route_table_association" "a" {
+resource "aws_route_table_association" "c" {
   subnet_id = aws_subnet.subnet-3.id
   route_table_id = aws_route_table.main-rt-table.id
 }
@@ -108,7 +108,7 @@ resource "aws_security_group" "fast-api-group" {
     to_port = 8000
     protocol = "tcp"
     cidr_blocks = ["10.99.0.0/24", "10.99.2.0/24"]
-    security_groups = [aws_security_group.node-red-group.id,aws_security_group.rds-group.id]
+    security_groups = [aws_security_group.node-red-group.id]
   }
 
   egress{
@@ -138,7 +138,7 @@ resource "aws_security_group" "rds-group" {
   egress{
     from_port = 3306
     to_port = 3306
-    protocol = "-tcp"
+    protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
   
@@ -173,7 +173,7 @@ resource "aws_security_group" "sub3-group" {
 
 resource "aws_db_subnet_group" "db-subnet-group" {
   name = "db-subnet-group"
-  subnet_ids = [aws_subnet.subnet-3.id, aws_subnet.subnet-3.id]
+  subnet_ids = [aws_subnet.subnet-2.id, aws_subnet.subnet-3.id]
 }
 
 resource "aws_db_instance" "DB" {
@@ -240,7 +240,7 @@ resource "aws_instance" "node-red" {
 resource "aws_instance" "fast-api" {
   ami = "ami-0f58b397bc5c1f2e8"
   instance_type = "t2.micro"
-  subnet_id = aws_subnet.subnet-1.id
+  subnet_id = aws_subnet.subnet-2.id
   security_groups = [aws_security_group.fast-api-group.id]
   key_name = "EC2First"
   user_data = <<-EOF
@@ -291,7 +291,7 @@ resource "aws_instance" "fast-api" {
 resource "aws_instance" "nginx" {
   ami = "ami-0f58b397bc5c1f2e8"
   instance_type = "t2.micro"
-  subnet_id = aws_subnet.subnet-1.id
+  subnet_id = aws_subnet.subnet-2.id
   security_groups = [aws_security_group.sub3-group.id]
   key_name = "EC2First"
   user_data = <<-EOF
@@ -312,17 +312,17 @@ resource "aws_instance" "nginx" {
   }
 }
 
-resource "aws_eip" "lb" {
+resource "aws_eip" "node-eip" {
   instance = aws_instance.node-red.id
   domain   = "vpc"
 }
 
-resource "aws_eip" "2b" {
+resource "aws_eip" "fast-eip" {
   instance = aws_instance.fast-api.id
   domain   = "vpc"
 }
 
-resource "aws_eip" "3b" {
+resource "aws_eip" "nginx-eip" {
   instance = aws_instance.nginx.id
   domain   = "vpc"
 }

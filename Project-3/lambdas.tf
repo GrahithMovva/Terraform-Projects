@@ -7,13 +7,13 @@ data "archive_file" "lambda" {
 resource "aws_lambda_function" "secretManager-RDS-lamdba" {
   filename      = "lambda_function_payload.zip"
   function_name = "lambda_RDS_handler"
-  handler       = "index.handler"
+  handler       = "lambda_RDS_handler"
   runtime       = "python3.12"
   role          = aws_iam_role.lambda-1-role.arn
 
   environment {
     variables = {
-      SECRET_NAME = ""
+      SECRET_NAME = "rds-credentials"
       REGION_NAME = "ap-south-1"
     }
   }
@@ -23,13 +23,13 @@ resource "aws_lambda_function" "secretManager-RDS-lamdba" {
 resource "aws_lambda_function" "secretManager-lamdba" {
   filename      = "lambda_function_payload.zip"
   function_name = "lambda_SM_handler"
-  handler       = "index.handler"
+  handler       = "lambda_SM_handler"
   runtime       = "python3.12"
   role          = aws_iam_role.lambda-2-role.arn
 
   environment {
     variables = {
-      SECRET_NAME = ""
+      SECRET_NAME = "rds-credentials"
     }
   }
 }
