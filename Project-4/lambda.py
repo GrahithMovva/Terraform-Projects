@@ -101,3 +101,41 @@ def lambda_RDS_handler(event, context):
         'statusCode': 200,
         'body': json.dumps('Data inserted successfully!')
     }
+
+def lambda_RDS_handler_verneMQ(event, context):
+    # Secret name and region
+    secret_name = os.getenv('SECRET_NAME')
+    region_name = os.getenv('REGION_NAME')
+    host = os.getenv("DB_HOST")
+
+
+    credentials = get_db_credentials(secret_name)
+
+
+    db_host = credentials['host']
+    db_username = credentials['username']
+    db_password = credentials['password']
+    db_name = credentials['dbname']
+    db_port = 3306
+
+    connection = pymysql.connect(
+        host=db_host,
+        user=db_username,
+        password=db_password,
+        database=db_name,
+        port=db_port
+    )
+
+    try:
+        with connection.cursor() as cursor:
+            # Example query to insert data
+            sql = "INSERT INTO your_table (column1, column2) VALUES (%s, %s)"
+            cursor.execute(sql, ('value1', 'value2'))
+        connection.commit()
+    finally:
+        connection.close()
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Data inserted successfully!')
+    }

@@ -61,8 +61,8 @@ resource "aws_iam_role_policy_attachment" "policy-2-attach" {
 
 resource "aws_lambda_function" "RDS-Data-procesing-lamdba" {
   filename      = "lambda_function_payload.zip"
-  function_name = "lambda_RDS_handler"
-  handler       = "lambda_RDS_handler"
+  function_name = "lambda_RDS_handler_verneMQ"
+  handler       = "lambda_RDS_handler_verneMQ"
   runtime       = "python3.12"
   role          = aws_iam_role.lambda-RDS-Analyze-role.arn
   vpc_config {
@@ -101,7 +101,7 @@ EOF
 }
 
 resource "aws_lambda_permission" "hour-event-permission" {
-  statement_id  = "AllowExecutonFromEventBridge"
+  statement_id  = "AllowExecutonFromEventBridgeHour"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.RDS-Data-procesing-lamdba.function_name
   principal     = "events.amazonaws.com"
@@ -109,7 +109,7 @@ resource "aws_lambda_permission" "hour-event-permission" {
 }
 
 resource "aws_lambda_permission" "minute-event-permission" {
-  statement_id  = "AllowExecutonFromEventBridge"
+  statement_id  = "AllowExecutonFromEventBridgeMinute"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.RDS-Data-procesing-lamdba.function_name
   principal     = "events.amazonaws.com"
