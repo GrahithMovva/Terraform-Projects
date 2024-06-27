@@ -6,7 +6,7 @@ resource "aws_db_instance" "mysql" {
   engine_version       = "8.0"
   instance_class       = "db.t3.micro"
   username             = "admin"
-  password             = aws_secretsmanager_secret_version.sec-version.secret_string
+  password             = jsondecode(aws_secretsmanager_secret_version.sec-version.secret_string)["password"]
   parameter_group_name = "default.mysql8.0"
   skip_final_snapshot  = true
 
@@ -21,7 +21,7 @@ resource "random_password" "rand_password" {
 }
 
 resource "aws_secretsmanager_secret" "rds-secret" {
-  name = "rds-credentialsss"
+  name = "rds-credentialssss"
 
 }
 
@@ -29,9 +29,13 @@ resource "aws_secretsmanager_secret" "rds-secret" {
 resource "aws_secretsmanager_secret_version" "sec-version" {
   secret_id = aws_secretsmanager_secret.rds-secret.id
 
-  secret_string = random_password.rand_password.result
-}
+  secret_string = jsonencode({
+    password = "examplepass"
+    username = "admin"
+    dbname = "mydb"
 
+  })
+}
 
 resource "aws_secretsmanager_secret_rotation" "rotation" {
   secret_id           = aws_secretsmanager_secret.rds-secret.id
